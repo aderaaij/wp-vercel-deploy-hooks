@@ -6,7 +6,7 @@
 /*
 Plugin Name: Vercel Deploy Hooks
 Plugin URI: https://github.com/aderaaij/wp-vercel-deploy-hooks
-Description: Allows for building your static site on command, post publish/update or scheduled
+Description: WordPress plugin for building your Vercel static site on command, post publish/update or scheduled
 Version: 1.0
 Author: Arden de Raaij
 Author URI: https://arden.nl
