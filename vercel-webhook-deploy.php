@@ -5,11 +5,11 @@
  */
 /*
 Plugin Name: Vercel Deploy Hooks
-Plugin URI: http://github.com/lukethacoder/wp-vercel-deploy-hooks
-Description: Adds a Build Website button that sends a webhook request to build a vercel hosted website when clicked
-Version: 1.1.3
-Author: Luke Secomb
-Author URI: https://lukesecomb.digital
+Plugin URI: https://github.com/aderaaij/wp-vercel-deploy-hooks
+Description: Allows for building your static site on command, post publish/update or scheduled
+Version: 1.0
+Author: Arden de Raaij
+Author URI: https://arden.nl
 License: GPLv3 or later
 Text Domain: vercel-deploy-hooks
 */
@@ -150,7 +150,7 @@ class deployWebhook {
 
             <footer>
                 <h3><?php _e('Extra Info', 'vercel-deploy-hooks');?></h3>
-                <p><a href="https://github.com/aderaaij/wp-vercel-deploy-hooks"><?php _e('Plugin Docs', 'vercel-deploy-hooks');?></a></p>
+                <p><a href="https://github.com/aderaaij/wp-vercel-deploy-hooks"><?php _e('Plugin repository on Github', 'vercel-deploy-hooks');?></a></p>
                 <p><a href="https://vercel.com/docs/more/deploy-hooks"><?php _e('Vercel Deploy Hooks Documentation', 'vercel-deploy-hooks');?></a></p>
             </footer>
 
