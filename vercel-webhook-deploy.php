@@ -1,17 +1,17 @@
 <?php
 
 /**
- *  @package Webhook Netlify Deploy
+ *  @package Vercel Deploy Hooks
  */
 /*
-Plugin Name: Webhook Netlify Deploy
-Plugin URI: http://github.com/lukethacoder/wp-webhook-netlify-deploy
-Description: Adds a Build Website button that sends a webhook request to build a netlify hosted website when clicked
+Plugin Name: Vercel Deploy Hooks
+Plugin URI: http://github.com/lukethacoder/wp-vercel-deploy-hooks
+Description: Adds a Build Website button that sends a webhook request to build a vercel hosted website when clicked
 Version: 1.1.3
 Author: Luke Secomb
 Author URI: https://lukesecomb.digital
 License: GPLv3 or later
-Text Domain: webhook-netlify-deploy
+Text Domain: vercel-deploy-hooks
 */
 
 /*
@@ -46,8 +46,8 @@ class deployWebhook {
     	// Hook into the admin menu
     	add_action( 'admin_menu', array( $this, 'create_plugin_settings_page' ) );
 
-      // Add Settings and Fields
-    	add_action( 'admin_init', array( $this, 'setup_sections' ) );
+        // Add Settings and Fields
+      add_action( 'admin_init', array( $this, 'setup_sections' ) );
       add_action( 'admin_init', array( $this, 'setup_schedule_fields' ) );
       add_action( 'admin_init', array( $this, 'setup_developer_fields' ) );
       add_action( 'admin_footer', array( $this, 'run_the_mighty_javascript' ) );
@@ -65,7 +65,13 @@ class deployWebhook {
       add_filter( 'cron_schedules', array( $this, 'custom_cron_intervals' ) );
 
       // Link event to function
-      add_action('scheduled_netlify_build', array( $this, 'fire_netlify_webhook' ) );
+      add_action('scheduled_vercel_build', array( $this, 'fire_vercel_webhook' ) );
+      
+      // add actions for deploying on publish
+      add_action('publish_future_post', array( $this,' vb_webhook_future_post'), 10);
+      add_action('publish_post', array( $this,'vb_webhook_post'), 10, 2);
+      add_action('publish_page', array( $this, 'vb_webhook_post'), 10, 2);
+      add_action('post_updated', array( $this,'vb_webhook_update'), 10, 3);
 
     }
 
@@ -76,43 +82,22 @@ class deployWebhook {
     **/
     public function plugin_settings_page_content() {?>
     	<div class="wrap">
-    		<h2><?php _e('Webhook Netlify Deploy', 'webhook-netlify-deploy');?></h2>
+    		<h2><?php _e('Vercel Deploy Hooks', 'vercel-deploy-hooks');?></h2>
         <hr>
-        <h3><?php _e('Build Website', 'webhook-netlify-deploy');?></h3>
+        <h3><?php _e('Build Website', 'vercel-deploy-hooks');?></h3>
         <button id="build_button" class="button button-primary" name="submit" type="submit">
-          <?php _e('Build Site', 'webhook-netlify-deploy');?>
+          <?php _e('Build Site', 'vercel-deploy-hooks');?>
         </button>
         <br>
-        <p id="build_status" style="font-size: 12px; margin: 0;"></p>
-        <p style="font-size: 12px">*<?php _e('Do not abuse the Build Site button', 'webhook-netlify-deploy');?>*</p><br>
-        <hr>
-        <h3><?php _e('Deploy Status', 'webhook-netlify-deploy');?></h3>
-        <button id="status_button" class="button button-primary" name="submit" type="submit" style="margin: 0 0 16px;">
-          <?php _e('Get Deploys Status', 'webhook-netlify-deploy');?>
-        </button>
-
-        <div style="margin: 0 0 16px;">
-            <a id="build_img_link" href="">
-                <img id="build_img" src=""/>
-            </a>
-        </div>
-        <div>
-            <!-- <p id="deploy_status"></p> -->
-            <p id="deploy_id"></p>
-            <div style="display: flex;"><p id="deploy_finish_time"></p><p id="deploy_loading"></p></div>
-            <p id="deploy_ssl_url"></p>
-        </div>
-
-        <div id="deploy_preview"></div>
-
-        <hr>
-
-        <h3><?php _e('Previous Builds', 'webhook-netlify-deploy');?></h3>
-        <button id="previous_deploys" class="button button-primary" name="submit" type="submit" style="margin: 0 0 16px;">
-          <?php _e('Get All Previous Deploys', 'webhook-netlify-deploy');?>
-        </button>
-        <ul id="previous_deploys_container" style="list-style: none;"></ul>
-    	</div> <?php
+        <p id="build_status" style="font-size: 12px; margin: 16px 0;">
+            <ul>
+                <li id="build_status_id" style="display:none"></li>
+                <li id="build_status_state" style="display:none"></li>
+                <li id="build_status_createdAt" style="display:none"></li>
+            </ul>
+        </p>
+        <p style="font-size: 12px">*<?php _e('Do not abuse the Build Site button', 'vercel-deploy-hooks');?>*</p><br>
+       <?php
     }
 
     /**
@@ -122,8 +107,8 @@ class deployWebhook {
     **/
     public function plugin_settings_schedule_content() {?>
     	<div class="wrap">
-    		<h1><?php _e('Schedule Netlify Builds', 'webhook-netlify-deploy');?></h1>
-    		<p><?php _e('This section allows regular Netlify builds to be scheduled.', 'webhook-netlify-deploy');?></p>
+    		<h1><?php _e('Schedule vercel Builds', 'vercel-deploy-hooks');?></h1>
+    		<p><?php _e('This section allows regular vercel builds to be scheduled.', 'vercel-deploy-hooks');?></p>
         <hr>
 
         <?php
@@ -142,14 +127,13 @@ class deployWebhook {
     }
 
     /**
-    * Developer Settings (subpage) markup
+    * Settings (subpage) markup
     *
     * @since 1.0.0
     **/
     public function plugin_settings_developer_content() {?>
     	<div class="wrap">
-    		<h1><?php _e('Developer Settings', 'webhook-netlify-deploy');?></h1>
-    		<p><?php _e('Do not change this if you dont know what you are doing.', 'webhook-netlify-deploy');?></p>
+    		<h1><?php _e('Settings', 'vercel-deploy-hooks');?></h1>    	
             <hr>
 
             <?php
@@ -165,9 +149,9 @@ class deployWebhook {
     		</form>
 
             <footer>
-                <h3><?php _e('Extra Info', 'webhook-netlify-deploy');?></h3>
-                <p><a href="https://github.com/lukethacoder/wp-webhook-netlify-deploy"><?php _e('Plugin Docs', 'webhook-netlify-deploy');?></a></p>
-                <p><a href="https://github.com/lukethacoder/wp-webhook-netlify-deploy"><?php _e('Project Github', 'webhook-netlify-deploy');?></a></p>
+                <h3><?php _e('Extra Info', 'vercel-deploy-hooks');?></h3>
+                <p><a href="https://github.com/aderaaij/wp-vercel-deploy-hooks"><?php _e('Plugin Docs', 'vercel-deploy-hooks');?></a></p>
+                <p><a href="https://vercel.com/docs/more/deploy-hooks"><?php _e('Vercel Deploy Hooks Documentation', 'vercel-deploy-hooks');?></a></p>
             </footer>
 
     	</div> <?php
@@ -189,124 +173,23 @@ class deployWebhook {
         console.log('run_the_mighty_javascript');
         jQuery(document).ready(function($) {
             var _this = this;
-            $( ".webhook-deploy_page_developer_webhook_fields td > input" ).css( "width", "100%");
+            $( ".deploy_page_developer_webhook_fields td > input" ).css( "width", "100%");
 
             var webhook_url = '<?php echo(get_option('webhook_address')) ?>';
-            var netlify_user_agent = '<?php echo(get_option('netlify_user_agent')) ?>';
-            var netlify_api_key = '<?php echo(get_option('netlify_api_key'))?>'
-            var netlify_site_id = '<?php echo(get_option('netlify_site_id')) ?>';
-
-            var netlifySites = "https://api.netlify.com/api/v1/sites/";
-            var req_url = netlifySites + netlify_site_id + '/deploys?access_token=' + netlify_api_key;
-
-            function getDeployData() {
-                $.ajax({
-                    type: "GET",
-                    url: req_url
-                }).done(function(data) {
-                    appendStatusData(data[0]);
-                })
-                .fail(function() {
-                    console.error("error res => ", this)
-                })
-            }
-
-            function getAllPreviousBuilds() {
-                $.ajax({
-                    type: "GET",
-                    url: req_url
-                }).done(function(data) {
-                    var buildNo = 1;
-                    data.forEach(function(item) {
-                        var deploy_preview_url = '';
-                        if (data.deploy_ssl_url) {
-                            deploy_preview_url = data.deploy_ssl_url
-                        } else {
-                            deploy_preview_url = data.deploy_url
-                        }
-                        $('#previous_deploys_container').append(
-                            '<li style="margin: 0 auto 16px"><hr><h3>No: ' + buildNo + ' - ' + item.name + '</h3><h4>Created at: ' +  new Date(item.created_at.toString()).toLocaleString() + '</h4><h4>' + item.title + '</h4><p>Id: ' + item.id + '</p><p>Deploy Time: ' + item.deploy_time + '</p><p>Branch: ' + item.branch + '</p><a href="' + item.deploy_preview_url + '">Preview Build</a></li>'
-                        );
-                        buildNo++;
-                    })
-                })
-                .fail(function() {
-                    console.error("error res => ", this)
-                })
-            }
-
-            function runSecondFunc() {
-                $.ajax({
-                    type: "GET",
-                    url: req_url
-                }).done(function(data) {
-                    $( "#build_img_link" ).attr("href", `${data.admin_url}`);
-                    // $( "#build_img" ).attr("src", `https://api.netlify.com/api/v1/badges/${ netlify_site_id }/deploy-status`);
-                })
-                .fail(function() {
-                    console.error("error res => ", this)
-                })
-
-                // $( "#build_status" ).html('Deploy building');
-            }
-
-            function appendStatusData(data) {
-                var d = new Date();
-                var p = d.toLocaleString();
-                var yo = new Date(data.created_at);
-                var created = yo.toLocaleString();
-                var current_state = data.state;
-
-                if (data.state === 'ready') {
-                    current_state = "Success"
-                }
-
-                if (data.state !== 'ready') {
-                    $( "#deploy_finish_time" ).html( "Building Site" );
-                    $( "#build_img" ).attr("src", `https://api.netlify.com/api/v1/badges/${ netlify_site_id }/deploy-status`);
-                    var dots = window.setInterval( function() {
-                        var wait = document.getElementById('deploy_loading');
-                        if ( wait.innerHTML.length >= 3 ) {
-                            wait.innerHTML = "";
-                        }
-                        else {
-                            wait.innerHTML += ".";
-                        }
-                    },
-                    500);
-                } else {
-                    var deploy_preview_url = '';
-
-                    if (data.deploy_ssl_url) {
-                        deploy_preview_url = data.deploy_ssl_url
-                    } else {
-                        deploy_preview_url = data.deploy_url
-                    }
-
-                    $( "#deploy_id" ).html( "ID: " + data.id + "" );
-                    $( "#deploy_finish_time" ).html( "Build Completed: " + created );
-                    $( "#build_img" ).attr("src", `https://api.netlify.com/api/v1/badges/${ netlify_site_id }/deploy-status`);
-                    $( "#deploy_ssl_url" ).html( "Deploy URL: <a href='" + deploy_preview_url + "'>" + data.deploy_ssl_url + "</a>");
-                    $( "#deploy_preview" ).html( `<iframe style="width: 100%; min-height: 540px" id="frameLeft" src="${deploy_preview_url}"/>`)
-                }
+            var vercel_site_id = '<?php echo(get_option('vercel_site_id')) ?>';
 
 
-            }
-
-            function netlifyDeploy() {
+            function vercelDeploy() {
                 return $.ajax({
                     type: "POST",
                     url: webhook_url,
                     dataType: "json",
-                    header: {
-                        "User-Agent": netlify_user_agent
-                    }
-                });
+                })
             }
 
             $("#status_button").on("click", function(e) {
                 e.preventDefault();
-                getDeployData();
+                // getDeployData();
             });
 
             $("#previous_deploys").on("click", function(e) {
@@ -326,10 +209,18 @@ class deployWebhook {
 
                 e.preventDefault();
 
-                netlifyDeploy().done(function() {
+                vercelDeploy().done(function(res) {
                     console.log("success")
-                    getDeployData();
-                    $( "#build_status" ).html('Deploy building');
+                    // getDeployData();
+                    $("#build_status" ).html('Bulding in progress');
+                    $("#build_status_id" ).removeAttr('style');
+                    $("#build_status_id").html('<b>ID</b>: ' + res.job.id);
+                    $("#build_status_state" ).removeAttr('style');
+                    $("#build_status_state").html('<b>State</b>: ' + res.job.state);
+                    $("#build_status_createdAt" ).removeAttr('style');
+                    var timestamp = res.job.createdAt;
+                    var miliSeconds = 
+                    $("#build_status_createdAt").html('<b>Created At</b>: ' + new Date(res.job.createdAt).toLocaleString());
                 })
                 .fail(function() {
                     console.error("error res => ", this)
@@ -337,7 +228,7 @@ class deployWebhook {
                 })
             });
 
-            $(document).on('click', '#wp-admin-bar-netlify-deploy-button', function(e) {
+            $(document).on('click', '#wp-admin-bar-vercel-deploy-button', function(e) {
                 e.preventDefault();
 
                 var $button = $(this),
@@ -349,8 +240,8 @@ class deployWebhook {
 
                 $button.addClass('running').css('opacity', '0.5');
 
-                netlifyDeploy().done(function() {
-                    var $badge = $('#admin-bar-netlify-deploy-status-badge');
+                vercelDeploy().done(function() {
+                    var $badge = $('#admin-bar-vercel-deploy-status-badge');
 
                     $button.removeClass('running');
                     $button.addClass('deploying');
@@ -383,12 +274,12 @@ class deployWebhook {
     * @since 1.0.0
     **/
     public function create_plugin_settings_page() {
-        $run_deploys = apply_filters( 'netlify_deploy_capability', 'manage_options' );
-        $adjust_settings = apply_filters( 'netlify_adjust_settings_capability', 'manage_options' );
+        $run_deploys = apply_filters( 'vercel_deploy_capability', 'manage_options' );
+        $adjust_settings = apply_filters( 'vercel_adjust_settings_capability', 'manage_options' );
 
         if ( current_user_can( $run_deploys ) ) {
-            $page_title = __('Deploy to Netlify', 'webhook-netlify-deploy');
-            $menu_title = __('Webhook Deploy', 'webhook-netlify-deploy');
+            $page_title = __('Deploy to vercel', 'vercel-deploy-hooks');
+            $menu_title = __('Deploy', 'vercel-deploy-hooks');
             $capability = $run_deploys;
             $slug = 'deploy_webhook_fields';
             $callback = array( $this, 'plugin_settings_page_content' );
@@ -399,8 +290,8 @@ class deployWebhook {
         }
 
         if ( current_user_can( $adjust_settings ) ) {
-            $sub_page_title = __('Schedule Builds', 'webhook-netlify-deploy');
-            $sub_menu_title = __('Schedule Builds', 'webhook-netlify-deploy');
+            $sub_page_title = __('Schedule Builds', 'vercel-deploy-hooks');
+            $sub_menu_title = __('Schedule Builds', 'vercel-deploy-hooks');
             $sub_capability = $adjust_settings;
             $sub_slug = 'schedule_webhook_fields';
             $sub_callback = array( $this, 'plugin_settings_schedule_content' );
@@ -409,8 +300,8 @@ class deployWebhook {
         }
 
         if ( current_user_can( $adjust_settings ) ) {
-            $sub_page_title = __('Developer Settings', 'webhook-netlify-deploy');
-            $sub_menu_title = __('Developer Settings', 'webhook-netlify-deploy');
+            $sub_page_title = __('Settings', 'vercel-deploy-hooks');
+            $sub_menu_title = __('Settings', 'vercel-deploy-hooks');
             $sub_capability = $adjust_settings;
             $sub_slug = 'developer_webhook_fields';
             $sub_callback = array( $this, 'plugin_settings_developer_content' );
@@ -425,11 +316,11 @@ class deployWebhook {
       // add a 'weekly' interval
       $schedules['weekly'] = array(
         'interval' => 604800,
-        'display' => __('Once Weekly', 'webhook-netlify-deploy')
+        'display' => __('Once Weekly', 'vercel-deploy-hooks')
       );
       $schedules['monthly'] = array(
         'interval' => 2635200,
-        'display' => __('Once a month', 'webhook-netlify-deploy')
+        'display' => __('Once a month', 'vercel-deploy-hooks')
       );
 
       return $schedules;
@@ -442,7 +333,7 @@ class deployWebhook {
     **/
     public function admin_notice() { ?>
         <div class="notice notice-success is-dismissible">
-            <p><?php _e('Your settings have been updated!', 'webhook-netlify-deploy');?></p>
+            <p><?php _e('Your settings have been updated!', 'vercel-deploy-hooks');?></p>
         </div>
     <?php
     }
@@ -453,8 +344,8 @@ class deployWebhook {
     * @since 1.0.0
     **/
     public function setup_sections() {
-        add_settings_section( 'schedule_section', __('Scheduling Settings', 'webhook-netlify-deploy'), array( $this, 'section_callback' ), 'schedule_webhook_fields' );
-        add_settings_section( 'developer_section', __('Webhook Settings', 'webhook-netlify-deploy'), array( $this, 'section_callback' ), 'developer_webhook_fields' );
+        add_settings_section( 'schedule_section', __('Scheduling Settings', 'vercel-deploy-hooks'), array( $this, 'section_callback' ), 'schedule_webhook_fields' );
+        add_settings_section( 'developer_section', __('Webhook Settings', 'vercel-deploy-hooks'), array( $this, 'section_callback' ), 'developer_webhook_fields' );
     }
 
     /**
@@ -465,7 +356,7 @@ class deployWebhook {
     public function section_callback( $arguments ) {
     	switch( $arguments['id'] ){
     		case 'developer_section':
-    			echo __('The build and deploy status will not work without these fields entered corrently', 'webhook-netlify-deploy');
+    			echo __('A Vercel Deploy hook URL is required to run this plugin', 'vercel-deploy-hooks');
     			break;
     	}
     }
@@ -482,30 +373,30 @@ class deployWebhook {
         $fields = array(
           array(
             'uid' => 'enable_scheduled_builds',
-            'label' => __('Enable Scheduled Events', 'webhook-netlify-deploy'),
+            'label' => __('Enable Scheduled Events', 'vercel-deploy-hooks'),
             'section' => 'schedule_section',
             'type' => 'checkbox',
             'options' => array(
-              'enable' => __('Enable', 'webhook-netlify-deploy'),
+              'enable' => __('Enable', 'vercel-deploy-hooks'),
               ),
             'default' =>  array()
           ),
           array(
             'uid' => 'select_time_build',
-            'label' => __('Select Time to Build', 'webhook-netlify-deploy'),
+            'label' => __('Select Time to Build', 'vercel-deploy-hooks'),
             'section' => 'schedule_section',
             'type' => 'time',
             'default' => '00:00'
           ),
           array(
             'uid' => 'select_schedule_builds',
-            'label' => __('Select Build Schedule', 'webhook-netlify-deploy'),
+            'label' => __('Select Build Schedule', 'vercel-deploy-hooks'),
             'section' => 'schedule_section',
             'type' => 'select',
             'options' => array(
-              'daily' => __('Daily', 'webhook-netlify-deploy'),
-              'weekly' => __('Weekly', 'webhook-netlify-deploy'),
-              'monthly' => __('Monthly', 'webhook-netlify-deploy'),
+              'daily' => __('Daily', 'vercel-deploy-hooks'),
+              'weekly' => __('Weekly', 'vercel-deploy-hooks'),
+              'monthly' => __('Monthly', 'vercel-deploy-hooks'),
             ),
             'default' => array('week')
           )
@@ -525,36 +416,24 @@ class deployWebhook {
         $fields = array(
           array(
             'uid' => 'webhook_address',
-            'label' => __('Webhook Build URL', 'webhook-netlify-deploy'),
+            'label' => __('Vercel Deploy Hook URL', 'vercel-deploy-hooks'),
             'section' => 'developer_section',
             'type' => 'text',
-                'placeholder' => 'https://',
-                'default' => '',
-            ),
-            array(
-            'uid' => 'netlify_site_id',
-            'label' => __('Netlify site_id', 'webhook-netlify-deploy'),
-            'section' => 'developer_section',
-            'type' => 'text',
-                'placeholder' => 'e.g. 5b8e927e-82e1-4786-4770-a9a8321yes43',
-                'default' => '',
-            ),
-            array(
-            'uid' => 'netlify_api_key',
-            'label' => __('Netlify API Key', 'webhook-netlify-deploy'),
-            'section' => 'developer_section',
-            'type' => 'text',
-                'placeholder' => __('GET O-AUTH TOKEN', 'webhook-netlify-deploy'),
+                'placeholder' => 'e.g. https://api.vercel.com/v1/integrations/deploy/QmcwKGEbAyFtfybXBxvuSjFT54dc5dRLmAYNB5jxxXsbeZ/hUg65Lj4CV',
                 'default' => '',
           ),
-            array(
-            'uid' => 'netlify_user_agent',
-            'label' => __('User-Agent Site Value', 'webhook-netlify-deploy'),
+          array(
+            'uid' => 'enable_on_post_update',
+            'label' => __('Activate deploy on post update', 'vercel-deploy-hooks'),
             'section' => 'developer_section',
-            'type' => 'text',
-                'placeholder' => 'Website Name (and-website-url.netlify.com)',
-                'default' => '',
-          )
+            'type' => 'checkbox',
+            'options' => array(
+              'enable' => __('Enable', 'vercel-deploy-hooks'),
+              ),
+            'default' =>  array()
+          ),       
+          
+          
         );
       foreach( $fields as $field ){
           add_settings_field( $field['uid'], $field['label'], array( $this, 'field_callback' ), 'developer_webhook_fields', $field['section'], $field );
@@ -623,38 +502,17 @@ class deployWebhook {
     * @since 1.1.0
     **/
     public function add_to_admin_bar( $admin_bar ) {
-
-        $see_deploy_status = apply_filters( 'netlify_status_capability', 'manage_options' );
-        $run_deploys = apply_filters( 'netlify_deploy_capability', 'manage_options' );
-
+        $run_deploys = apply_filters( 'vercel_deploy_capability', 'manage_options' );
         if ( current_user_can( $run_deploys ) ) {
             $webhook_address = get_option( 'webhook_address' );
-
             if ( $webhook_address ) {
                 $button = array(
-                    'id' => 'netlify-deploy-button',
-                    'title' => '<div style="cursor: pointer;"><span class="ab-icon dashicons dashicons-hammer"></span> <span class="ab-label">'. __('Deploy Site', 'webhook-netlify-deploy') .'</span></div>'
+                    'id' => 'vercel-deploy-button',
+                    'title' => '<div style="cursor: pointer;"><span class="ab-icon dashicons dashicons-hammer"></span> <span class="ab-label">'. __('Deploy Site', 'vercel-deploy-hooks') .'</span></div>'
                 );
-
                 $admin_bar->add_node( $button );
             }
         }
-
-        if ( current_user_can( $see_deploy_status ) ) {
-            $netlify_site_id = get_option( 'netlify_site_id' );
-
-            if ( $netlify_site_id ) {
-                $badge = array(
-                    'id' => 'netlify-deploy-status-badge',
-                    'title' => sprintf( '<div style="display: flex; height: 100%%; align-items: center;">
-                            <img id="admin-bar-netlify-deploy-status-badge" src="https://api.netlify.com/api/v1/badges/%s/deploy-status" alt="'. __('Netlify deply status', 'webhook-netlify-deploy') .'" style="width: auto; height: 16px;" />
-                        </div>', $netlify_site_id )
-                );
-
-                $admin_bar->add_node( $badge );
-            }
-        }
-
     }
 
     /**
@@ -685,17 +543,17 @@ class deployWebhook {
     * @since 1.1.2
     **/
     public function set_build_schedule_cron() {
-      $enable_builds = get_option( 'enable_scheduled_builds' );
-      if( $enable_builds ){
-        if( !wp_next_scheduled('scheduled_netlify_build') ) {
-          $schedule = get_option( 'select_schedule_builds' );
-          $set_time = get_option( 'select_time_build' );
-          $timestamp = strtotime( $set_time );
-          wp_schedule_event( $timestamp , $schedule[0], 'scheduled_netlify_build' );
+        $enable_builds = get_option( 'enable_scheduled_builds' );
+        if( $enable_builds ){
+            if( !wp_next_scheduled('scheduled_vercel_build') ) {
+                $schedule = get_option( 'select_schedule_builds' );
+                $set_time = get_option( 'select_time_build' );
+                $timestamp = strtotime( $set_time );
+                wp_schedule_event( $timestamp , $schedule[0], 'scheduled_vercel_build' );
+            }
+        } else {
+            $this->deactivate_scheduled_cron();
         }
-      } else {
-        $this->deactivate_scheduled_cron();
-      }
     }
 
     /**
@@ -705,33 +563,43 @@ class deployWebhook {
     * @since 1.1.2
     **/
     public function deactivate_scheduled_cron(){
-      // find out when the last event was scheduled
-    	$timestamp = wp_next_scheduled('scheduled_netlify_build');
-    	// unschedule previous event if any
-    	wp_unschedule_event($timestamp, 'scheduled_netlify_build');
+        // find out when the last event was scheduled
+        $timestamp = wp_next_scheduled('scheduled_vercel_build');
+        // unschedule previous event if any
+        wp_unschedule_event($timestamp, 'scheduled_vercel_build');
     }
 
     /**
     *
-    * Trigger Netlify Build
+    * Trigger vercel Build
     *
     * @since 1.1.2
     **/
-    public function fire_netlify_webhook(){
-      $netlify_user_agent = get_option('netlify_user_agent');
-      $webhook_url = get_option('webhook_address');
-      if($netlify_user_agent && $webhook_url){
-        $options = array(
-          'method'  => 'POST',
-          'header'  => array(
-            "User-Agent" => $netlify_user_agent,
-          )
-        );
-        return wp_remote_post($webhook_url, $options);
-      }
-      return false;
+    public function fire_vercel_webhook(){
+        $webhook_url = get_option('webhook_address');
+        if($webhook_url){
+            $options = array(
+                'method'  => 'POST',
+            );
+            return wp_remote_post($webhook_url, $options);
+        }
+        return false;
     }
 
+    public function vb_webhook_post($post_id, $post) {
+        $enable_builds = get_option( 'enable_on_post_update' );
+        if ($enable_builds && $post->post_status === 'publish') {
+            $this->fire_vercel_webhook();           
+        }
+    }
+  
+    public function vb_webhook_future_post( $post_id ) {
+        $this->vb_webhook_post($post_id, get_post($post_id));
+    }
+  
+    public function vb_webhook_update($post_id, $post_after, $post_before) {
+        $this->vb_webhook_post($post_id, $post_after);
+    }
 }
 
 new deployWebhook;
