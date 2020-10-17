@@ -15,9 +15,9 @@ You can install WP Vercel Deploy Hooks manually or through Composer
 
 ### 🤙 Manual Install
 
-- Download the plugin as a `.zip` file [from the repository](https://github.com/aderaaij/wp-vercel-deploy-hooks/archive/main.zip)
-- Login to your WordPress site and go to `Plugins -> Add new -> Upload plugin`
-- Locate the `.zip` file on your machine, upload and activate
+1. Download the plugin as a `.zip` file [from the repository](https://github.com/aderaaij/wp-vercel-deploy-hooks/archive/main.zip)
+2. Login to your WordPress site and go to `Plugins -> Add new -> Upload plugin`
+3. Locate the `.zip` file on your machine, upload and activate
 
 ### 🎼 Composer
 
