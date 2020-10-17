@@ -1,6 +1,6 @@
 # WP Vercel Deploy Hooks
 
-A WordPress plugin to deploy a static site to [Vercel](https://vercel.com/) when you publish a new WordPress post, update a WordPress post or deploy on command from the WordPress admin menu or admin bar.
+A WordPress plugin to deploy a static site to [Vercel](https://vercel.com/) when you publish a new WordPress post/page, update a WordPress post/page or deploy on command from the WordPress admin menu and admin bar.
 
 Based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://github.com/lukethacoder/wp-netlify-webhook-deploy).
 
@@ -43,9 +43,13 @@ Now the package will be included in the plugins folder when you use `composer in
 
 To enable the plugin, you will need to create a [Deploy Hook for your Vercel Project](https://vercel.com/docs/more/deploy-hooks).
 
-### Settings
+### 🎚 Settings
 
 After you've created your deploy hook, navigate to `Deploy -> Settings` in the WordPress admin menu and paste your Vercel Deploy hook URL. On the settings page you can also activate deploys when you publish or update a post (disabled by default).
+
+### ⏲ Scheduling
+
+When you enable scheduling it calls [the `cron_schedules` hook](https://developer.wordpress.org/reference/hooks/cron_schedules/) which depends on your site having visitors to be triggered. To make sure your schedule is triggered timely, you could schedule a CRON job in your hosting panel which calls `wp-cron.php`. Please check out the [Webhook Netlify Deploy scheduling documentation](https://github.com/lukethacoder/wp-webhook-netlify-deploy#scheduling-netlify-builds) for more information.
 
 ## 🤔 To Do
 
