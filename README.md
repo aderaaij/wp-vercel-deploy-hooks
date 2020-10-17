@@ -6,8 +6,8 @@ Based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://gith
 
 ## Features
 
-- Deploy your Vercel project when publishing / updating a WordPress post
-- Manually deploy your Vercel Project with the push of a button
+- 🚗 Deploy your Vercel project when publishing / updating a WordPress post
+- 👉 Manually deploy your Vercel Project with the push of a button
 
 ## Installation
 
@@ -15,7 +15,7 @@ You can install WP Vercel Deploy Hooks manually or through Composer
 
 ### Manual Install
 
-- Download the Plugin as a `.zip` file from this repository
+- Download the plugin as a `.zip` file [from the repository](https://github.com/aderaaij/wp-vercel-deploy-hooks/archive/main.zip)
 - Login to your WordPress site and go to `Plugins -> Add new -> Upload plugin`
 - Locate the `.zip` file on your machine, upload and activate
 
