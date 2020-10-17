@@ -1,11 +1,54 @@
 # WP Vercel Deploy Hooks
 
-originally a fork from [WP Netlify Webhook Deploy](https://github.com/lukethacoder/wp-netlify-webhook-deploy)
+A WordPress plugin to deploy a static site to [Vercel](https://vercel.com/) when you publish a new WordPress post, update a WordPress post or deploy on command from the WordPress admin menu or admin bar.
 
-## Description
+Based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://github.com/lukethacoder/wp-netlify-webhook-deploy).
 
-Deploy your static site with WordPress and Netlify, this plugin offers:
+## Features
 
-- Deploy on post updates
-- Scheduling of builds
-- Build on command with a manual trigger
+- Deploy your Vercel project when publishing / updating a WordPress post
+- Manually deploy your Vercel Project with the push of a button
+
+## Installation
+
+You can install WP Vercel Deploy Hooks manually or through Composer
+
+### Manual Install
+
+- Download the Plugin as a `.zip` file from this repository
+- Login to your WordPress site and go to `Plugins -> Add new -> Upload plugin`
+- Locate the `.zip` file on your machine, upload and activate
+
+### Composer
+
+Composer allows you to install pacakges from a GitHub repository. This repository includes a `composer.json` file which declares the package as a WordPress plugin. Include it in your project's `composer.json` as following:
+
+```json
+{
+  ...
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/aderaaij/wp-vercel-deploy-hooks.git"
+    }
+  ],
+  "require": {
+    "aderaaij/wp-vercel-deploy-hooks": "main"
+  },
+  ...
+}
+```
+
+Now the package will be included in the plugins folder when you use `composer install/update`.
+
+## Settings / Configuration
+
+To enable the plugin, you will need to create a [Deploy Hook for your Vercel Project](https://vercel.com/docs/more/deploy-hooks).
+
+### Settings
+
+After you've created your deploy hook, navigate to `Deploy -> Settings` in the WordPress admin menu and paste your Vercel Deploy hook URL. On the settings page you can also activate deploys when you publish or update a post (disabled by default).
+
+## To Do
+
+- Test scheduled builds
