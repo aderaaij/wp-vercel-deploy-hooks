@@ -9,17 +9,17 @@ Based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://gith
 - 🚗 &nbsp;&nbsp;Deploy your Vercel project when publishing / updating a WordPress post
 - 👉 &nbsp;&nbsp;Manually deploy your Vercel Project with the push of a button
 
-## Installation
+## 🛠 Installation
 
 You can install WP Vercel Deploy Hooks manually or through Composer
 
-### Manual Install
+### 🤙 Manual Install
 
 - Download the plugin as a `.zip` file [from the repository](https://github.com/aderaaij/wp-vercel-deploy-hooks/archive/main.zip)
 - Login to your WordPress site and go to `Plugins -> Add new -> Upload plugin`
 - Locate the `.zip` file on your machine, upload and activate
 
-### Composer
+### 🎼 Composer
 
 Composer allows you to install pacakges from a GitHub repository. This repository includes a `composer.json` file which declares the package as a WordPress plugin. Include it in your project's `composer.json` as following:
 
@@ -39,7 +39,7 @@ Composer allows you to install pacakges from a GitHub repository. This repositor
 
 Now the package will be included in the plugins folder when you use `composer install/update`.
 
-## Settings / Configuration
+## ⚙️ Settings / Configuration
 
 To enable the plugin, you will need to create a [Deploy Hook for your Vercel Project](https://vercel.com/docs/more/deploy-hooks).
 
@@ -47,6 +47,6 @@ To enable the plugin, you will need to create a [Deploy Hook for your Vercel Pro
 
 After you've created your deploy hook, navigate to `Deploy -> Settings` in the WordPress admin menu and paste your Vercel Deploy hook URL. On the settings page you can also activate deploys when you publish or update a post (disabled by default).
 
-## To Do
+## 🤔 To Do
 
 - Test scheduled builds
