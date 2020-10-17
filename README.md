@@ -24,8 +24,7 @@ You can install WP Vercel Deploy Hooks manually or through Composer
 Composer allows you to install pacakges from a GitHub repository. This repository includes a `composer.json` file which declares the package as a WordPress plugin. Include it in your project's `composer.json` as following:
 
 ```json
-{
-  ...
+...
   "repositories": [
     {
       "type": "vcs",
@@ -34,9 +33,8 @@ Composer allows you to install pacakges from a GitHub repository. This repositor
   ],
   "require": {
     "aderaaij/wp-vercel-deploy-hooks": "main"
-  },
-  ...
-}
+  }
+...
 ```
 
 Now the package will be included in the plugins folder when you use `composer install/update`.
