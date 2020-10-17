@@ -49,4 +49,4 @@ After you've created your deploy hook, navigate to `Deploy -> Settings` in the W
 
 ## 🤔 To Do
 
-- Test scheduled builds
+- Add support for deploy and build statusses and updates through the [Vercel API](https://vercel.com/docs/api)
