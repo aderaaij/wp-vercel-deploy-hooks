@@ -3,6 +3,7 @@
 /**
  *  @package Vercel Deploy Hooks
  */
+
 /*
 Plugin Name: Vercel Deploy Hooks
 Plugin URI: https://github.com/aderaaij/wp-vercel-deploy-hooks
@@ -29,7 +30,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-defined( 'ABSPATH' ) or die('You do not have access to this file, sorry mate');
+defined( 'ABSPATH' ) or die('You do not have access to this file');
 
 class deployWebhook {
 
@@ -40,39 +41,38 @@ class deployWebhook {
     **/
     public function __construct() {
 
-      // Stop crons on uninstall
-      register_deactivation_hook(__FILE__,  array( $this, 'deactivate_scheduled_cron'));
+        // Stop crons on uninstall
+        register_deactivation_hook(__FILE__,  array( $this, 'deactivate_scheduled_cron'));
 
     	// Hook into the admin menu
     	add_action( 'admin_menu', array( $this, 'create_plugin_settings_page' ) );
 
         // Add Settings and Fields
-      add_action( 'admin_init', array( $this, 'setup_sections' ) );
-      add_action( 'admin_init', array( $this, 'setup_schedule_fields' ) );
-      add_action( 'admin_init', array( $this, 'setup_developer_fields' ) );
-      add_action( 'admin_footer', array( $this, 'run_the_mighty_javascript' ) );
-      add_action( 'admin_bar_menu', array( $this, 'add_to_admin_bar' ), 90 );
+        add_action( 'admin_init', array( $this, 'setup_sections' ) );
+        add_action( 'admin_init', array( $this, 'setup_schedule_fields' ) );
+        add_action( 'admin_init', array( $this, 'setup_developer_fields' ) );
+        add_action( 'admin_footer', array( $this, 'run_the_mighty_javascript' ) );
+        add_action( 'admin_bar_menu', array( $this, 'add_to_admin_bar' ), 90 );
 
       // Listen to cron scheduler option updates
-      add_action('update_option_enable_scheduled_builds', array( $this, 'build_schedule_options_updated' ), 10, 3 );
-      add_action('update_option_select_schedule_builds', array( $this, 'build_schedule_options_updated' ), 10, 3 );
-      add_action('update_option_select_time_build', array( $this, 'build_schedule_options_updated' ), 10, 3 );
+        add_action('update_option_enable_scheduled_builds', array( $this, 'build_schedule_options_updated' ), 10, 3 );
+        add_action('update_option_select_schedule_builds', array( $this, 'build_schedule_options_updated' ), 10, 3 );
+        add_action('update_option_select_time_build', array( $this, 'build_schedule_options_updated' ), 10, 3 );
 
-      // Trigger cron scheduler every WP load
-      add_action('wp', array( $this, 'set_build_schedule_cron') );
+        // Trigger cron scheduler every WP load
+        add_action('wp', array( $this, 'set_build_schedule_cron') );
 
-      // Add custom schedules
-      add_filter( 'cron_schedules', array( $this, 'custom_cron_intervals' ) );
+        // Add custom schedules
+        add_filter( 'cron_schedules', array( $this, 'custom_cron_intervals' ) );
 
-      // Link event to function
-      add_action('scheduled_vercel_build', array( $this, 'fire_vercel_webhook' ) );
-      
-      // add actions for deploying on publish
-      add_action('publish_future_post', array( $this,' vb_webhook_future_post'), 10);
-      add_action('publish_post', array( $this,'vb_webhook_post'), 10, 2);
-      add_action('publish_page', array( $this, 'vb_webhook_post'), 10, 2);
-      add_action('post_updated', array( $this,'vb_webhook_update'), 10, 3);
+        // Link event to function
+        add_action('scheduled_vercel_build', array( $this, 'fire_vercel_webhook' ) );
 
+        // add actions for deploying on post/page update and publish
+        add_action('publish_future_post', array( $this,' vb_webhook_future_post'), 10);
+        add_action('publish_post', array( $this,'vb_webhook_post'), 10, 2);
+        add_action('publish_page', array( $this, 'vb_webhook_post'), 10, 2);
+        add_action('post_updated', array( $this,'vb_webhook_update'), 10, 3);
     }
 
     /**
@@ -103,7 +103,7 @@ class deployWebhook {
     /**
     * Schedule Builds (subpage) markup
     *
-    * @since 1.1.2
+    * @since 1.0.0
     **/
     public function plugin_settings_schedule_content() {?>
     	<div class="wrap">
@@ -187,39 +187,17 @@ class deployWebhook {
                 })
             }
 
-            $("#status_button").on("click", function(e) {
-                e.preventDefault();
-                // getDeployData();
-            });
-
-            $("#previous_deploys").on("click", function(e) {
-                e.preventDefault();
-                getAllPreviousBuilds();
-            });
-
             $("#build_button").on("click", function(e) {
-
-                // hide deploy
-                $('#build_img_link').attr('href', '');
-                $('#build_img').attr('src', '');
-                $('#deploy_id').html('');
-                $('#deploy_finish_time').html('');
-                $('#deploy_ssl_url').html('');
-                $('#deploy_preview').html('');
-
                 e.preventDefault();
-
+                
                 vercelDeploy().done(function(res) {
                     console.log("success")
-                    // getDeployData();
                     $("#build_status" ).html('Bulding in progress');
                     $("#build_status_id" ).removeAttr('style');
                     $("#build_status_id").html('<b>ID</b>: ' + res.job.id);
                     $("#build_status_state" ).removeAttr('style');
                     $("#build_status_state").html('<b>State</b>: ' + res.job.state);
                     $("#build_status_createdAt" ).removeAttr('style');
-                    var timestamp = res.job.createdAt;
-                    var miliSeconds = 
                     $("#build_status_createdAt").html('<b>Created At</b>: ' + new Date(res.job.createdAt).toLocaleString());
                 })
                 .fail(function() {
@@ -312,8 +290,15 @@ class deployWebhook {
 
     }
 
+    /**
+    * Custom CRON Intervals
+    *
+    * cron_schedules code reference:
+    * @link https://developer.wordpress.org/reference/hooks/cron_schedules/
+    *
+    * @since 1.0.0
+    **/
     public function custom_cron_intervals($schedules) {
-      // add a 'weekly' interval
       $schedules['weekly'] = array(
         'interval' => 604800,
         'display' => __('Once Weekly', 'vercel-deploy-hooks')
@@ -327,7 +312,7 @@ class deployWebhook {
     }
 
     /**
-    * Notify Admin on Successful Update
+    * Notify Admin on Successful Plugin Update
     *
     * @since 1.0.0
     **/
@@ -367,7 +352,7 @@ class deployWebhook {
     * Based off this article:
     * @link https://www.smashingmagazine.com/2016/04/three-approaches-to-adding-configurable-fields-to-your-plugin/
     *
-    * @since 1.1.0
+    * @since 1.0.0
     **/
     public function setup_schedule_fields() {
         $fields = array(
@@ -499,7 +484,7 @@ class deployWebhook {
     /**
     * Add Deploy Button and Deployment Status to admin bar
     *
-    * @since 1.1.0
+    * @since 1.0.0
     **/
     public function add_to_admin_bar( $admin_bar ) {
         $run_deploys = apply_filters( 'vercel_deploy_capability', 'manage_options' );
@@ -522,7 +507,7 @@ class deployWebhook {
     * Check if scheduled builds have been enabled, and pass to
     * the enable function. Or disable.
     *
-    * @since 1.1.2
+    * @since 1.0.0
     **/
     public function build_schedule_options_updated() {
       $enable_builds = get_option( 'enable_scheduled_builds' );
@@ -540,7 +525,7 @@ class deployWebhook {
     *
     * Activate cron job to trigger build
     *
-    * @since 1.1.2
+    * @since 1.0.0
     **/
     public function set_build_schedule_cron() {
         $enable_builds = get_option( 'enable_scheduled_builds' );
@@ -560,7 +545,7 @@ class deployWebhook {
     *
     * Remove cron jobs set by this plugin
     *
-    * @since 1.1.2
+    * @since 1.0.0
     **/
     public function deactivate_scheduled_cron(){
         // find out when the last event was scheduled
@@ -573,7 +558,7 @@ class deployWebhook {
     *
     * Trigger vercel Build
     *
-    * @since 1.1.2
+    * @since 1.0.0
     **/
     public function fire_vercel_webhook(){
         $webhook_url = get_option('webhook_address');
