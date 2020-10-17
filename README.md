@@ -4,7 +4,7 @@ A WordPress plugin to deploy a static site to [Vercel](https://vercel.com/) when
 
 Based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://github.com/lukethacoder/wp-netlify-webhook-deploy).
 
-## Features
+## ✅ Features
 
 - 🚗 &nbsp;&nbsp;Deploy your Vercel project when publishing / updating a WordPress post
 - 👉 &nbsp;&nbsp;Manually deploy your Vercel Project with the push of a button
