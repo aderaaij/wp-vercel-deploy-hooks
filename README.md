@@ -8,6 +8,7 @@ Based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://gith
 
 - 🚗 &nbsp;&nbsp;Deploy your Vercel project when publishing / updating a WordPress post
 - 👉 &nbsp;&nbsp;Manually deploy your Vercel Project with the push of a button
+- ⏲ &nbsp;&nbsp;Schedule deploys on a daily or weekly basis (mileage may vary).
 
 ## 🛠 Installation
 
