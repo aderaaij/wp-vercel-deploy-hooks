@@ -1,4 +1,4 @@
-# WP Vercel Deploy Hookss
+# WP Vercel Deploy Hooks
 
 A WordPress plugin to deploy a static site to [Vercel](https://vercel.com/) when you publish a new WordPress post/page, update a WordPress post/page or deploy on command from the WordPress admin menu and admin bar.
 
