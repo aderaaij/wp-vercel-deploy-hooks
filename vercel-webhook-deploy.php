@@ -8,7 +8,7 @@
 Plugin Name: Vercel Deploy Hooks
 Plugin URI: https://github.com/aderaaij/wp-vercel-deploy-hooks
 Description: WordPress plugin for building your Vercel static site on command, post publish/update or scheduled
-Version: 1.0
+Version: 1.1.0
 Author: Arden de Raaij
 Author URI: https://arden.nl
 License: GPLv3 or later
@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 defined( 'ABSPATH' ) or die('You do not have access to this file');
 
-class deployWebhook {
+class vdhp_vercel_webhook_deploy {
 
     /**
     * Constructor
@@ -587,5 +587,5 @@ class deployWebhook {
     }
 }
 
-new deployWebhook;
+new vdhp_vercel_webhook_deploy;
 ?>
