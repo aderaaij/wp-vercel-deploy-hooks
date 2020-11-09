@@ -77,7 +77,7 @@ class vdhp_vercel_webhook_deploy {
 
     /**
     * Main Plugin Page markup
-    *b
+    *
     * @since 1.0.0
     **/
     public function plugin_settings_page_content() {?>
