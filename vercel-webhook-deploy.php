@@ -192,7 +192,7 @@ class vdhp_vercel_webhook_deploy {
                 
                 vercelDeploy().done(function(res) {
                     console.log("success")
-                    $("#build_status" ).html('Bulding in progress');
+                    $("#build_status" ).html('Building in progress');
                     $("#build_status_id" ).removeAttr('style');
                     $("#build_status_id").html('<b>ID</b>: ' + res.job.id);
                     $("#build_status_state" ).removeAttr('style');
