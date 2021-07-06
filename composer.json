@@ -1,6 +1,6 @@
 {
   "name": "aderaaij/wp-vercel-deploy-hooks",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "wordpress-plugin",
   "license": "GPLv3",
   "description": "WordPress starter theme with a modern development workflow",
