@@ -44,6 +44,7 @@ class vdhp_vercel_webhook_deploy {
         // Stop crons on uninstall
         register_deactivation_hook(__FILE__,  array( $this, 'deactivate_scheduled_cron'));
 
+        add_action( 'wp_loaded', array($this, 'create_plugin_capabilities'));
     	// Hook into the admin menu
     	add_action( 'admin_menu', array( $this, 'create_plugin_settings_page' ) );
 
@@ -245,6 +246,11 @@ class vdhp_vercel_webhook_deploy {
         });
         </script> <?php
     }
+    public function create_plugin_capabilities() {
+        $role = get_role('administrator');
+        $role->add_cap( 'vercel_deploy_capability', true );
+        $role->add_cap( 'vercel_adjust_settings_capability', true );
+    }
 
     /**
     * Plugin Menu Items Setup
@@ -252,13 +258,10 @@ class vdhp_vercel_webhook_deploy {
     * @since 1.0.0
     **/
     public function create_plugin_settings_page() {
-        $run_deploys = apply_filters( 'vercel_deploy_capability', 'manage_options' );
-        $adjust_settings = apply_filters( 'vercel_adjust_settings_capability', 'manage_options' );
-
-        if ( current_user_can( $run_deploys ) ) {
+        if ( current_user_can('vercel_deploy_capability') ) {
             $page_title = __('Deploy to vercel', 'vercel-deploy-hooks');
             $menu_title = __('Deploy', 'vercel-deploy-hooks');
-            $capability = $run_deploys;
+            $capability = 'vercel_deploy_capability';
             $slug = 'deploy_webhook_fields';
             $callback = array( $this, 'plugin_settings_page_content' );
             $icon = 'dashicons-admin-plugins';
@@ -267,20 +270,20 @@ class vdhp_vercel_webhook_deploy {
             add_menu_page( $page_title, $menu_title, $capability, $slug, $callback, $icon, $position );
         }
 
-        if ( current_user_can( $adjust_settings ) ) {
+        if ( current_user_can( 'vercel_adjust_settings_capability' ) ) {
             $sub_page_title = __('Schedule Builds', 'vercel-deploy-hooks');
             $sub_menu_title = __('Schedule Builds', 'vercel-deploy-hooks');
-            $sub_capability = $adjust_settings;
+            $sub_capability = 'vercel_adjust_settings_capability';
             $sub_slug = 'schedule_webhook_fields';
             $sub_callback = array( $this, 'plugin_settings_schedule_content' );
 
             add_submenu_page( $slug, $sub_page_title, $sub_menu_title, $sub_capability, $sub_slug, $sub_callback );
         }
 
-        if ( current_user_can( $adjust_settings ) ) {
+        if ( current_user_can( 'vercel_adjust_settings_capability' ) ) {
             $sub_page_title = __('Settings', 'vercel-deploy-hooks');
             $sub_menu_title = __('Settings', 'vercel-deploy-hooks');
-            $sub_capability = $adjust_settings;
+            $sub_capability = 'vercel_adjust_settings_capability';
             $sub_slug = 'developer_webhook_fields';
             $sub_callback = array( $this, 'plugin_settings_developer_content' );
 
@@ -487,8 +490,7 @@ class vdhp_vercel_webhook_deploy {
     * @since 1.0.0
     **/
     public function add_to_admin_bar( $admin_bar ) {
-        $run_deploys = apply_filters( 'vercel_deploy_capability', 'manage_options' );
-        if ( current_user_can( $run_deploys ) ) {
+        if ( current_user_can( 'vercel_deploy_capability' ) ) {
             $webhook_address = get_option( 'webhook_address' );
             if ( $webhook_address ) {
                 $button = array(
