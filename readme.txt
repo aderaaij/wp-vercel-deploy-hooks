@@ -32,5 +32,9 @@ Unfortunately this plugin will not (yet) show build / deploy updates as it is no
 
 == Changelog ==
 
+= 1.3.0 =
+* Add support for custom user roles. Credits to [Morlin1129](https://github.com/Morlin1129/wp-vercel-deploy-hooks)
+
 = 1.0 =
 * First release
+
