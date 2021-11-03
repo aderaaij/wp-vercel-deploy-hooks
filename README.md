@@ -52,6 +52,18 @@ After you've created your deploy hook, navigate to `Deploy -> Settings` in the W
 
 When you enable scheduling it calls [the `cron_schedules` hook](https://developer.wordpress.org/reference/hooks/cron_schedules/) which depends on your site having visitors to be triggered. To make sure your schedule is triggered timely, you could schedule a CRON job in your hosting panel which calls `wp-cron.php`. Please check out the [Webhook Netlify Deploy scheduling documentation](https://github.com/lukethacoder/wp-webhook-netlify-deploy#scheduling-netlify-builds) for more information.
 
+## 👯 Contributors & Credits
+
+This plugin was based on the excellent WordPress Plugin [WP Netlify Webhook Deploy](https://github.com/lukethacoder/wp-netlify-webhook-deploy)
+
+<a href="https://github.com/aderaaij/wp-vercel-deploy-hooks/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=aderaaij/wp-vercel-deploy-hooks" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
+
 ## 🤔 To Do
 
 - Add support for deploy and build statusses and updates through the [Vercel API](https://vercel.com/docs/api)
+- Add support for Netlify Builds and Deploys
+- Add support for multiple Vercel deploy endpoints
