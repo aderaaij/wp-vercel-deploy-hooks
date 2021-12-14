@@ -74,7 +74,7 @@ class vdhp_vercel_webhook_deploy {
         add_action('publish_post', array( $this,'vb_webhook_post'), 10, 2);
         add_action('publish_page', array( $this, 'vb_webhook_post'), 10, 2);
         add_action('post_updated', array( $this,'vb_webhook_update'), 10, 3);
-        add_action('post_updated', array( $this,'vb_webhook_trash_post'), 10);
+        add_action('wp_trash_post', array( $this,'vb_webhook_trash_post'), 10);
     }
 
     /**
