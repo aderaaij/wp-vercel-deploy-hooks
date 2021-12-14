@@ -74,6 +74,7 @@ class vdhp_vercel_webhook_deploy {
         add_action('publish_post', array( $this,'vb_webhook_post'), 10, 2);
         add_action('publish_page', array( $this, 'vb_webhook_post'), 10, 2);
         add_action('post_updated', array( $this,'vb_webhook_update'), 10, 3);
+        add_action('post_updated', array( $this,'vb_webhook_trash_post'), 10);
     }
 
     /**
@@ -419,6 +420,16 @@ class vdhp_vercel_webhook_deploy {
               'enable' => __('Enable', 'vercel-deploy-hooks'),
               ),
             'default' =>  array()
+          ),
+          array(
+            'uid' => 'enable_on_post_trash',
+            'label' => __('Activate deploy on post trash/untrash', 'vercel-deploy-hooks'),
+            'section' => 'developer_section',
+            'type' => 'checkbox',
+            'options' => array(
+              'enable' => __('Enable', 'vercel-deploy-hooks'),
+              ),
+            'default' =>  array()
           ),       
           
           
@@ -582,6 +593,13 @@ class vdhp_vercel_webhook_deploy {
   
     public function vb_webhook_future_post( $post_id ) {
         $this->vb_webhook_post($post_id, get_post($post_id));
+    }
+
+    public function vb_webhook_trash_post( $post_id ) {
+        $enable_trash = get_option( 'enable_on_post_trash' );
+        if ($enable_trash) {
+            $this->vb_webhook_post($post_id, get_post($post_id));
+        }     
     }
   
     public function vb_webhook_update($post_id, $post_after, $post_before) {

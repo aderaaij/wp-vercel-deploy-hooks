@@ -22,7 +22,7 @@ You can install WP Vercel Deploy Hooks manually or through Composer
 
 ### 🎼 Composer
 
-Composer allows you to install pacakges from a GitHub repository. This repository includes a `composer.json` file which declares the package as a WordPress plugin. Include it in your project's `composer.json` as following:
+Composer allows you to install packages from a GitHub repository. This repository includes a `composer.json` file which declares the package as a WordPress plugin. Include it in your project's `composer.json` as following:
 
 ```json
 ...

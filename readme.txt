@@ -24,7 +24,7 @@ Yes it does, please see the [Plugin Documentation on Github](https://github.com/
 
 = Does this plugin show me if the deploy has been succesful? =
 
-Unfortunately this plugin will not (yet) show build / deploy updates as it is not connecter with the [Vercel API](https://vercel.com/docs/api). Any contributions on getting this to work would be most welcome. 
+Unfortunately this plugin will not (yet) show build / deploy updates as it is not connected with the [Vercel API](https://vercel.com/docs/api). Any contributions on getting this to work would be most welcome. 
 
 == Screenshots ==
 
