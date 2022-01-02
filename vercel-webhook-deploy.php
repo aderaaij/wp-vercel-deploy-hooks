@@ -71,9 +71,7 @@ class vdhp_vercel_webhook_deploy {
 
         // add actions for deploying on post/page update and publish
         add_action('publish_future_post', array( $this,' vb_webhook_future_post'), 10);
-        add_action('publish_post', array( $this,'vb_webhook_post'), 10, 2);
-        add_action('publish_page', array( $this, 'vb_webhook_post'), 10, 2);
-        add_action('post_updated', array( $this,'vb_webhook_update'), 10, 3);
+        add_action('transition_post_status', array( $this,'vb_webhook_post'), 10, 3);
     }
 
     /**
@@ -573,19 +571,21 @@ class vdhp_vercel_webhook_deploy {
         return false;
     }
 
-    public function vb_webhook_post($post_id, $post) {
+    public function vb_webhook_post($new_status, $old_status, $post) {
         $enable_builds = get_option( 'enable_on_post_update' );
-        if ($enable_builds && $post->post_status === 'publish') {
-            $this->fire_vercel_webhook();           
+        // We want to avoid triggering webhook by REST API (called by Gutenberg) not to trigger it twice. 
+        $rest = defined( 'REST_REQUEST' ) && REST_REQUEST;
+        // We only want to trigger the webhook only if we transition from or to publish state.
+        if ($enable_builds && !$rest && ($new_status === 'publish' || $old_status === 'publish')) {
+            $this->fire_vercel_webhook();
         }
     }
   
     public function vb_webhook_future_post( $post_id ) {
-        $this->vb_webhook_post($post_id, get_post($post_id));
-    }
-  
-    public function vb_webhook_update($post_id, $post_after, $post_before) {
-        $this->vb_webhook_post($post_id, $post_after);
+        $enable_builds = get_option( 'enable_on_post_update' );
+        if ($enable_builds) {
+            $this->fire_vercel_webhook();
+        }
     }
 }
 
