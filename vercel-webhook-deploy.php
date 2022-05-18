@@ -8,7 +8,7 @@
 Plugin Name: Vercel Deploy Hooks
 Plugin URI: https://github.com/aderaaij/wp-vercel-deploy-hooks
 Description: WordPress plugin for building your Vercel static site on command, post publish/update or scheduled
-Version: 1.4.0
+Version: 1.4.1
 Author: Arden de Raaij
 Author URI: https://arden.nl
 License: GPLv3 or later
@@ -35,18 +35,18 @@ defined( 'ABSPATH' ) or die('You do not have access to this file');
 class vdhp_vercel_webhook_deploy {
 
     /**
-    * Constructor
-    *
-    * @since 1.0.0
-    **/
+     * Constructor
+     *
+     * @since 1.0.0
+     **/
     public function __construct() {
 
         // Stop crons on uninstall
         register_deactivation_hook(__FILE__,  array( $this, 'deactivate_scheduled_cron'));
 
         add_action( 'wp_loaded', array($this, 'create_plugin_capabilities'));
-    	// Hook into the admin menu
-    	add_action( 'admin_menu', array( $this, 'create_plugin_settings_page' ) );
+        // Hook into the admin menu
+        add_action( 'admin_menu', array( $this, 'create_plugin_settings_page' ) );
 
         // Add Settings and Fields
         add_action( 'admin_init', array( $this, 'setup_sections' ) );
@@ -55,7 +55,7 @@ class vdhp_vercel_webhook_deploy {
         add_action( 'admin_footer', array( $this, 'run_the_mighty_javascript' ) );
         add_action( 'admin_bar_menu', array( $this, 'add_to_admin_bar' ), 90 );
 
-      // Listen to cron scheduler option updates
+        // Listen to cron scheduler option updates
         add_action('update_option_enable_scheduled_builds', array( $this, 'build_schedule_options_updated' ), 10, 3 );
         add_action('update_option_select_schedule_builds', array( $this, 'build_schedule_options_updated' ), 10, 3 );
         add_action('update_option_select_time_build', array( $this, 'build_schedule_options_updated' ), 10, 3 );
@@ -74,78 +74,97 @@ class vdhp_vercel_webhook_deploy {
         add_action('transition_post_status', array( $this,'vb_webhook_post'), 10, 3);
     }
 
+    public function is_using_constant_webhook()
+    {
+        return defined("WP_VERCEL_WEBHOOK_ADDRESS") && !empty(WP_VERCEL_WEBHOOK_ADDRESS);
+    }
+
     /**
-    * Main Plugin Page markup
-    *
-    * @since 1.0.0
-    **/
+     * Gets the webhook address by constant or by settings, in that order
+     * @return ?string
+     */
+    public function get_webhook_address()
+    {
+        if ($this->is_using_constant_webhook()) {
+            return WP_VERCEL_WEBHOOK_ADDRESS;
+        } else {
+            return get_option('webhook_address');
+        }
+    }
+
+    /**
+     * Main Plugin Page markup
+     *
+     * @since 1.0.0
+     **/
     public function plugin_settings_page_content() {?>
-    	<div class="wrap">
-    		<h2><?php _e('Vercel Deploy Hooks', 'vercel-deploy-hooks');?></h2>
-        <hr>
-        <h3><?php _e('Build Website', 'vercel-deploy-hooks');?></h3>
-        <button id="build_button" class="button button-primary" name="submit" type="submit">
-          <?php _e('Build Site', 'vercel-deploy-hooks');?>
-        </button>
-        <br>
-        <p id="build_status" style="font-size: 12px; margin: 16px 0;">
+        <div class="wrap">
+            <h2><?php _e('Vercel Deploy Hooks', 'vercel-deploy-hooks');?></h2>
+            <hr>
+            <h3><?php _e('Build Website', 'vercel-deploy-hooks');?></h3>
+            <button id="build_button" class="button button-primary" name="submit" type="submit">
+                <?php _e('Build Site', 'vercel-deploy-hooks');?>
+            </button>
+            <br>
+            <p id="build_status" style="font-size: 12px; margin: 16px 0;">
             <ul>
                 <li id="build_status_id" style="display:none"></li>
                 <li id="build_status_state" style="display:none"></li>
                 <li id="build_status_createdAt" style="display:none"></li>
             </ul>
-        </p>
-        <p style="font-size: 12px">*<?php _e('Do not abuse the Build Site button', 'vercel-deploy-hooks');?>*</p><br>
-       <?php
-    }
-
-    /**
-    * Schedule Builds (subpage) markup
-    *
-    * @since 1.0.0
-    **/
-    public function plugin_settings_schedule_content() {?>
-    	<div class="wrap">
-    		<h1><?php _e('Schedule vercel Builds', 'vercel-deploy-hooks');?></h1>
-    		<p><?php _e('This section allows regular vercel builds to be scheduled.', 'vercel-deploy-hooks');?></p>
-        <hr>
-
+            </p>
+            <p style="font-size: 12px">*<?php _e('Do not abuse the Build Site button', 'vercel-deploy-hooks');?>*</p><br>
+        </div>
         <?php
-        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ){
-              $this->admin_notice();
-        } ?>
-
-        <form method="POST" action="options.php">
-                <?php
-                    settings_fields( 'schedule_webhook_fields' );
-                    do_settings_sections( 'schedule_webhook_fields' );
-                    submit_button();
-                ?>
-        </form>
-    	</div> <?php
     }
 
     /**
-    * Settings (subpage) markup
-    *
-    * @since 1.0.0
-    **/
-    public function plugin_settings_developer_content() {?>
-    	<div class="wrap">
-    		<h1><?php _e('Settings', 'vercel-deploy-hooks');?></h1>    	
+     * Schedule Builds (subpage) markup
+     *
+     * @since 1.0.0
+     **/
+    public function plugin_settings_schedule_content() {?>
+        <div class="wrap">
+            <h1><?php _e('Schedule vercel Builds', 'vercel-deploy-hooks');?></h1>
+            <p><?php _e('This section allows regular vercel builds to be scheduled.', 'vercel-deploy-hooks');?></p>
             <hr>
 
             <?php
             if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ){
-                  $this->admin_notice();
+                $this->admin_notice();
             } ?>
-    		<form method="POST" action="options.php">
+
+            <form method="POST" action="options.php">
                 <?php
-                    settings_fields( 'developer_webhook_fields' );
-                    do_settings_sections( 'developer_webhook_fields' );
-                    submit_button();
+                settings_fields( 'schedule_webhook_fields' );
+                do_settings_sections( 'schedule_webhook_fields' );
+                submit_button();
                 ?>
-    		</form>
+            </form>
+        </div> <?php
+    }
+
+    /**
+     * Settings (subpage) markup
+     *
+     * @since 1.0.0
+     **/
+    public function plugin_settings_developer_content() {?>
+        <div class="wrap">
+            <h1><?php _e('Settings', 'vercel-deploy-hooks');?></h1>
+            <hr>
+
+            <?php
+            if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ){
+                $this->admin_notice();
+            } ?>
+            <form method="POST" action="options.php">
+                <?php
+                settings_fields( 'developer_webhook_fields' );
+                do_settings_sections( 'developer_webhook_fields' );
+                submit_button();
+                ?>
+            </form>
 
             <footer>
                 <h3><?php _e('Extra Info', 'vercel-deploy-hooks');?></h3>
@@ -153,14 +172,14 @@ class vdhp_vercel_webhook_deploy {
                 <p><a href="https://vercel.com/docs/more/deploy-hooks"><?php _e('Vercel Deploy Hooks Documentation', 'vercel-deploy-hooks');?></a></p>
             </footer>
 
-    	</div> <?php
+        </div> <?php
     }
 
     /**
-    * The Mighty JavaScript
-    *
-    * @since 1.0.0
-    **/
+     * The Mighty JavaScript
+     *
+     * @since 1.0.0
+     **/
     public function run_the_mighty_javascript() {
         // TODO: split up javascript to allow to be dynamically imported as needed
         // $screen = get_current_screen();
@@ -169,79 +188,79 @@ class vdhp_vercel_webhook_deploy {
         // }
         ?>
         <script type="text/javascript" >
-        console.log('run_the_mighty_javascript');
-        jQuery(document).ready(function($) {
-            var _this = this;
-            $( ".deploy_page_developer_webhook_fields td > input" ).css( "width", "100%");
+            console.log('run_the_mighty_javascript');
+            jQuery(document).ready(function($) {
+                var _this = this;
+                $( ".deploy_page_developer_webhook_fields td > input" ).css( "width", "100%");
 
-            var webhook_url = '<?php echo(get_option('webhook_address')) ?>';
-            var vercel_site_id = '<?php echo(get_option('vercel_site_id')) ?>';
+                var webhook_url = '<?php echo($this->get_webhook_address()) ?>';
+                var vercel_site_id = '<?php echo(get_option('vercel_site_id')) ?>';
 
 
-            function vercelDeploy() {
-                return $.ajax({
-                    type: "POST",
-                    url: webhook_url,
-                    dataType: "json",
-                })
-            }
-
-            $("#build_button").on("click", function(e) {
-                e.preventDefault();
-                
-                vercelDeploy().done(function(res) {
-                    console.log("success")
-                    $("#build_status" ).html('Building in progress');
-                    $("#build_status_id" ).removeAttr('style');
-                    $("#build_status_id").html('<b>ID</b>: ' + res.job.id);
-                    $("#build_status_state" ).removeAttr('style');
-                    $("#build_status_state").html('<b>State</b>: ' + res.job.state);
-                    $("#build_status_createdAt" ).removeAttr('style');
-                    $("#build_status_createdAt").html('<b>Created At</b>: ' + new Date(res.job.createdAt).toLocaleString());
-                })
-                .fail(function() {
-                    console.error("error res => ", this)
-                    $( "#build_status" ).html('There seems to be an error with the build', this);
-                })
-            });
-
-            $(document).on('click', '#wp-admin-bar-vercel-deploy-button', function(e) {
-                e.preventDefault();
-
-                var $button = $(this),
-                    $buttonContent = $button.find('.ab-item:first');
-
-                if ($button.hasClass('deploying') || $button.hasClass('running')) {
-                    return false;
+                function vercelDeploy() {
+                    return $.ajax({
+                        type: "POST",
+                        url: webhook_url,
+                        dataType: "json",
+                    })
                 }
 
-                $button.addClass('running').css('opacity', '0.5');
+                $("#build_button").on("click", function(e) {
+                    e.preventDefault();
 
-                vercelDeploy().done(function() {
-                    var $badge = $('#admin-bar-vercel-deploy-status-badge');
+                    vercelDeploy().done(function(res) {
+                        console.log("success")
+                        $("#build_status" ).html('Building in progress');
+                        $("#build_status_id" ).removeAttr('style');
+                        $("#build_status_id").html('<b>ID</b>: ' + res.job.id);
+                        $("#build_status_state" ).removeAttr('style');
+                        $("#build_status_state").html('<b>State</b>: ' + res.job.state);
+                        $("#build_status_createdAt" ).removeAttr('style');
+                        $("#build_status_createdAt").html('<b>Created At</b>: ' + new Date(res.job.createdAt).toLocaleString());
+                    })
+                        .fail(function() {
+                            console.error("error res => ", this)
+                            $( "#build_status" ).html('There seems to be an error with the build', this);
+                        })
+                });
 
-                    $button.removeClass('running');
-                    $button.addClass('deploying');
+                $(document).on('click', '#wp-admin-bar-vercel-deploy-button', function(e) {
+                    e.preventDefault();
 
-                    $buttonContent.find('.ab-label').text('Deploying…');
+                    var $button = $(this),
+                        $buttonContent = $button.find('.ab-item:first');
 
-                    if ($badge.length) {
-                        if (!$badge.data('original-src')) {
-                            $badge.data('original-src', $badge.attr('src'));
-                        }
-
-                        $badge.attr('src', $badge.data('original-src') + '?updated=' + Date.now());
+                    if ($button.hasClass('deploying') || $button.hasClass('running')) {
+                        return false;
                     }
-                })
-                .fail(function() {
-                    $button.removeClass('running').css('opacity', '1');
-                    $buttonContent.find('.dashicons-hammer')
-                        .removeClass('dashicons-hammer').addClass('dashicons-warning');
 
-                    console.error("error res => ", this)
-                })
+                    $button.addClass('running').css('opacity', '0.5');
+
+                    vercelDeploy().done(function() {
+                        var $badge = $('#admin-bar-vercel-deploy-status-badge');
+
+                        $button.removeClass('running');
+                        $button.addClass('deploying');
+
+                        $buttonContent.find('.ab-label').text('Deploying…');
+
+                        if ($badge.length) {
+                            if (!$badge.data('original-src')) {
+                                $badge.data('original-src', $badge.attr('src'));
+                            }
+
+                            $badge.attr('src', $badge.data('original-src') + '?updated=' + Date.now());
+                        }
+                    })
+                        .fail(function() {
+                            $button.removeClass('running').css('opacity', '1');
+                            $buttonContent.find('.dashicons-hammer')
+                                .removeClass('dashicons-hammer').addClass('dashicons-warning');
+
+                            console.error("error res => ", this)
+                        })
+                });
             });
-        });
         </script> <?php
     }
     public function create_plugin_capabilities() {
@@ -251,10 +270,10 @@ class vdhp_vercel_webhook_deploy {
     }
 
     /**
-    * Plugin Menu Items Setup
-    *
-    * @since 1.0.0
-    **/
+     * Plugin Menu Items Setup
+     *
+     * @since 1.0.0
+     **/
     public function create_plugin_settings_page() {
         if ( current_user_can('vercel_deploy_capability') ) {
             $page_title = __('Deploy to vercel', 'vercel-deploy-hooks');
@@ -292,147 +311,157 @@ class vdhp_vercel_webhook_deploy {
     }
 
     /**
-    * Custom CRON Intervals
-    *
-    * cron_schedules code reference:
-    * @link https://developer.wordpress.org/reference/hooks/cron_schedules/
-    *
-    * @since 1.0.0
-    **/
+     * Custom CRON Intervals
+     *
+     * cron_schedules code reference:
+     * @link https://developer.wordpress.org/reference/hooks/cron_schedules/
+     *
+     * @since 1.0.0
+     **/
     public function custom_cron_intervals($schedules) {
-      $schedules['weekly'] = array(
-        'interval' => 604800,
-        'display' => __('Once Weekly', 'vercel-deploy-hooks')
-      );
-      $schedules['monthly'] = array(
-        'interval' => 2635200,
-        'display' => __('Once a month', 'vercel-deploy-hooks')
-      );
+        $schedules['weekly'] = array(
+            'interval' => 604800,
+            'display' => __('Once Weekly', 'vercel-deploy-hooks')
+        );
+        $schedules['monthly'] = array(
+            'interval' => 2635200,
+            'display' => __('Once a month', 'vercel-deploy-hooks')
+        );
 
-      return $schedules;
+        return $schedules;
     }
 
     /**
-    * Notify Admin on Successful Plugin Update
-    *
-    * @since 1.0.0
-    **/
+     * Notify Admin on Successful Plugin Update
+     *
+     * @since 1.0.0
+     **/
     public function admin_notice() { ?>
         <div class="notice notice-success is-dismissible">
             <p><?php _e('Your settings have been updated!', 'vercel-deploy-hooks');?></p>
         </div>
-    <?php
+        <?php
     }
 
     /**
-    * Setup Sections
-    *
-    * @since 1.0.0
-    **/
+     * Setup Sections
+     *
+     * @since 1.0.0
+     **/
     public function setup_sections() {
         add_settings_section( 'schedule_section', __('Scheduling Settings', 'vercel-deploy-hooks'), array( $this, 'section_callback' ), 'schedule_webhook_fields' );
         add_settings_section( 'developer_section', __('Webhook Settings', 'vercel-deploy-hooks'), array( $this, 'section_callback' ), 'developer_webhook_fields' );
     }
 
     /**
-    * Check it wont break on build and deploy
-    *
-    * @since 1.0.0
-    **/
+     * Check it wont break on build and deploy
+     *
+     * @since 1.0.0
+     **/
     public function section_callback( $arguments ) {
-    	switch( $arguments['id'] ){
-    		case 'developer_section':
-    			echo __('A Vercel Deploy hook URL is required to run this plugin', 'vercel-deploy-hooks');
-    			break;
-    	}
+        switch( $arguments['id'] ){
+            case 'developer_section':
+                echo __('A Vercel Deploy hook URL is required to run this plugin', 'vercel-deploy-hooks');
+                break;
+        }
     }
 
     /**
-    * Fields used for schedule input data
-    *
-    * Based off this article:
-    * @link https://www.smashingmagazine.com/2016/04/three-approaches-to-adding-configurable-fields-to-your-plugin/
-    *
-    * @since 1.0.0
-    **/
+     * Fields used for schedule input data
+     *
+     * Based off this article:
+     * @link https://www.smashingmagazine.com/2016/04/three-approaches-to-adding-configurable-fields-to-your-plugin/
+     *
+     * @since 1.0.0
+     **/
     public function setup_schedule_fields() {
         $fields = array(
-          array(
-            'uid' => 'enable_scheduled_builds',
-            'label' => __('Enable Scheduled Events', 'vercel-deploy-hooks'),
-            'section' => 'schedule_section',
-            'type' => 'checkbox',
-            'options' => array(
-              'enable' => __('Enable', 'vercel-deploy-hooks'),
-              ),
-            'default' =>  array()
-          ),
-          array(
-            'uid' => 'select_time_build',
-            'label' => __('Select Time to Build', 'vercel-deploy-hooks'),
-            'section' => 'schedule_section',
-            'type' => 'time',
-            'default' => '00:00'
-          ),
-          array(
-            'uid' => 'select_schedule_builds',
-            'label' => __('Select Build Schedule', 'vercel-deploy-hooks'),
-            'section' => 'schedule_section',
-            'type' => 'select',
-            'options' => array(
-              'daily' => __('Daily', 'vercel-deploy-hooks'),
-              'weekly' => __('Weekly', 'vercel-deploy-hooks'),
-              'monthly' => __('Monthly', 'vercel-deploy-hooks'),
+            array(
+                'uid' => 'enable_scheduled_builds',
+                'label' => __('Enable Scheduled Events', 'vercel-deploy-hooks'),
+                'section' => 'schedule_section',
+                'type' => 'checkbox',
+                'options' => array(
+                    'enable' => __('Enable', 'vercel-deploy-hooks'),
+                ),
+                'default' =>  array()
             ),
-            'default' => array('week')
-          )
+            array(
+                'uid' => 'select_time_build',
+                'label' => __('Select Time to Build', 'vercel-deploy-hooks'),
+                'section' => 'schedule_section',
+                'type' => 'time',
+                'default' => '00:00'
+            ),
+            array(
+                'uid' => 'select_schedule_builds',
+                'label' => __('Select Build Schedule', 'vercel-deploy-hooks'),
+                'section' => 'schedule_section',
+                'type' => 'select',
+                'options' => array(
+                    'daily' => __('Daily', 'vercel-deploy-hooks'),
+                    'weekly' => __('Weekly', 'vercel-deploy-hooks'),
+                    'monthly' => __('Monthly', 'vercel-deploy-hooks'),
+                ),
+                'default' => array('week')
+            )
         );
-    	foreach( $fields as $field ){
-        	add_settings_field( $field['uid'], $field['label'], array( $this, 'field_callback' ), 'schedule_webhook_fields', $field['section'], $field );
+        foreach( $fields as $field ){
+            add_settings_field( $field['uid'], $field['label'], array( $this, 'field_callback' ), 'schedule_webhook_fields', $field['section'], $field );
             register_setting( 'schedule_webhook_fields', $field['uid'] );
-    	}
+        }
     }
 
     /**
-    * Fields used for developer input data
-    *
-    * @since 1.0.0
-    **/
+     * Fields used for developer input data
+     *
+     * @since 1.0.0
+     **/
     public function setup_developer_fields() {
         $fields = array(
-          array(
-            'uid' => 'webhook_address',
-            'label' => __('Vercel Deploy Hook URL', 'vercel-deploy-hooks'),
-            'section' => 'developer_section',
-            'type' => 'text',
+            array(
+                'uid' => 'webhook_address',
+                'label' => __('Vercel Deploy Hook URL', 'vercel-deploy-hooks'),
+                'section' => 'developer_section',
+                'type' => 'text',
                 'placeholder' => 'e.g. https://api.vercel.com/v1/integrations/deploy/QmcwKGEbAyFtfybXBxvuSjFT54dc5dRLmAYNB5jxxXsbeZ/hUg65Lj4CV',
                 'default' => '',
-          ),
-          array(
-            'uid' => 'enable_on_post_update',
-            'label' => __('Activate deploy on post update', 'vercel-deploy-hooks'),
-            'section' => 'developer_section',
-            'type' => 'checkbox',
-            'options' => array(
-              'enable' => __('Enable', 'vercel-deploy-hooks'),
-              ),
-            'default' =>  array()
-          ),       
-          
-          
+                'callback' => $this->is_using_constant_webhook() ? function($data) {
+                    echo "Set by constant WP_VERCEL_WEBHOOK_ADDRESS as <code>" . WP_VERCEL_WEBHOOK_ADDRESS . "</code>";
+                } : null,
+            ),
+            array(
+                'uid' => 'enable_on_post_update',
+                'label' => __('Activate deploy on post update', 'vercel-deploy-hooks'),
+                'section' => 'developer_section',
+                'type' => 'checkbox',
+                'options' => array(
+                    'enable' => __('Enable', 'vercel-deploy-hooks'),
+                ),
+                'default' =>  array()
+            ),
+
+
         );
-      foreach( $fields as $field ){
-          add_settings_field( $field['uid'], $field['label'], array( $this, 'field_callback' ), 'developer_webhook_fields', $field['section'], $field );
+        foreach( $fields as $field ){
+            add_settings_field(
+                $field['uid'],
+                $field['label'],
+                $field['callback'] ?? array( $this, 'field_callback' ),
+                'developer_webhook_fields',
+                $field['section'],
+                $field,
+            );
             register_setting( 'developer_webhook_fields', $field['uid'] );
-      }
+        }
     }
 
     /**
-    * Field callback for handling multiple field types
-    *
-    * @since 1.0.0
-    * @param $arguments
-    **/
+     * Field callback for handling multiple field types
+     *
+     * @since 1.0.0
+     * @param $arguments
+     **/
     public function field_callback( $arguments ) {
 
         $value = get_option( $arguments['uid'] );
@@ -448,8 +477,8 @@ class vdhp_vercel_webhook_deploy {
                 printf( '<input name="%1$s" id="%1$s" type="%2$s" placeholder="%3$s" value="%4$s" />', $arguments['uid'], $arguments['type'], $arguments['placeholder'], $value );
                 break;
             case 'time':
-              printf( '<input name="%1$s" id="%1$s" type="time" value="%2$s" />', $arguments['uid'], $value );
-              break;
+                printf( '<input name="%1$s" id="%1$s" type="time" value="%2$s" />', $arguments['uid'], $value );
+                break;
             case 'textarea':
                 printf( '<textarea name="%1$s" id="%1$s" placeholder="%2$s" rows="5" cols="50">%3$s</textarea>', $arguments['uid'], $arguments['placeholder'], $value );
                 break;
@@ -483,10 +512,10 @@ class vdhp_vercel_webhook_deploy {
     }
 
     /**
-    * Add Deploy Button and Deployment Status to admin bar
-    *
-    * @since 1.0.0
-    **/
+     * Add Deploy Button and Deployment Status to admin bar
+     *
+     * @since 1.0.0
+     **/
     public function add_to_admin_bar( $admin_bar ) {
         if ( current_user_can( 'vercel_deploy_capability' ) ) {
             $webhook_address = get_option( 'webhook_address' );
@@ -501,32 +530,32 @@ class vdhp_vercel_webhook_deploy {
     }
 
     /**
-    *
-    * Manage the cron jobs for triggering builds
-    *
-    * Check if scheduled builds have been enabled, and pass to
-    * the enable function. Or disable.
-    *
-    * @since 1.0.0
-    **/
+     *
+     * Manage the cron jobs for triggering builds
+     *
+     * Check if scheduled builds have been enabled, and pass to
+     * the enable function. Or disable.
+     *
+     * @since 1.0.0
+     **/
     public function build_schedule_options_updated() {
-      $enable_builds = get_option( 'enable_scheduled_builds' );
-      if( $enable_builds ){
-        // Clean any previous setting
-        $this->deactivate_scheduled_cron();
-        // Reset schedule
-        $this->set_build_schedule_cron();
-      } else {
-        $this->deactivate_scheduled_cron();
-      }
+        $enable_builds = get_option( 'enable_scheduled_builds' );
+        if( $enable_builds ){
+            // Clean any previous setting
+            $this->deactivate_scheduled_cron();
+            // Reset schedule
+            $this->set_build_schedule_cron();
+        } else {
+            $this->deactivate_scheduled_cron();
+        }
     }
 
     /**
-    *
-    * Activate cron job to trigger build
-    *
-    * @since 1.0.0
-    **/
+     *
+     * Activate cron job to trigger build
+     *
+     * @since 1.0.0
+     **/
     public function set_build_schedule_cron() {
         $enable_builds = get_option( 'enable_scheduled_builds' );
         if( $enable_builds ){
@@ -542,11 +571,11 @@ class vdhp_vercel_webhook_deploy {
     }
 
     /**
-    *
-    * Remove cron jobs set by this plugin
-    *
-    * @since 1.0.0
-    **/
+     *
+     * Remove cron jobs set by this plugin
+     *
+     * @since 1.0.0
+     **/
     public function deactivate_scheduled_cron(){
         // find out when the last event was scheduled
         $timestamp = wp_next_scheduled('scheduled_vercel_build');
@@ -555,13 +584,13 @@ class vdhp_vercel_webhook_deploy {
     }
 
     /**
-    *
-    * Trigger vercel Build
-    *
-    * @since 1.0.0
-    **/
+     *
+     * Trigger vercel Build
+     *
+     * @since 1.0.0
+     **/
     public function fire_vercel_webhook(){
-        $webhook_url = get_option('webhook_address');
+        $webhook_url = $this->get_webhook_address();
         if($webhook_url){
             $options = array(
                 'method'  => 'POST',
@@ -573,14 +602,14 @@ class vdhp_vercel_webhook_deploy {
 
     public function vb_webhook_post($new_status, $old_status, $post) {
         $enable_builds = get_option( 'enable_on_post_update' );
-        // We want to avoid triggering webhook by REST API (called by Gutenberg) not to trigger it twice. 
+        // We want to avoid triggering webhook by REST API (called by Gutenberg) not to trigger it twice.
         $rest = defined( 'REST_REQUEST' ) && REST_REQUEST;
         // We only want to trigger the webhook only if we transition from or to publish state.
         if ($enable_builds && !$rest && ($new_status === 'publish' || $old_status === 'publish')) {
             $this->fire_vercel_webhook();
         }
     }
-  
+
     public function vb_webhook_future_post( $post_id ) {
         $enable_builds = get_option( 'enable_on_post_update' );
         if ($enable_builds) {
