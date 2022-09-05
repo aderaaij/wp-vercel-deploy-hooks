@@ -48,6 +48,32 @@ To enable the plugin, you will need to create a [Deploy Hook for your Vercel Pro
 
 After you've created your deploy hook, navigate to `Deploy -> Settings` in the WordPress admin menu and paste your Vercel Deploy hook URL. On the settings page you can also activate deploys when you publish or update a post (disabled by default).
 
+You can configure the Vercel Deploy Hook URL in your wp-config.php or other configuration file to be based on your environment using the constant `WP_VERCEL_WEBHOOK_ADDRESS`. An example follows:  
+```php
+switch (WP_ENVIRONMENT_TYPE) {
+    case "live":
+    case "production":
+        define( 'WP_VERCEL_WEBHOOK_ADDRESS', 'https://api.vercel.com/v1/integrations/deploy/<sample>/<sample>' );
+        break;
+
+    case "test":
+    case "staging":
+        define( 'WP_VERCEL_WEBHOOK_ADDRESS', 'https://api.vercel.com/v1/integrations/deploy/<sample>/<sample>' );
+        break;
+
+    case "dev":
+    case "development":
+        define( 'WP_VERCEL_WEBHOOK_ADDRESS', 'https://api.vercel.com/v1/integrations/deploy/<sample>/<sample>' );
+        break;
+        
+    case "local":
+        define( 'WP_VERCEL_WEBHOOK_ADDRESS', 'https://api.vercel.com/v1/integrations/deploy/<sample>/<sample>' );
+        break;
+}
+```
+
+See <https://make.wordpress.org/core/2020/07/24/new-wp_get_environment_type-function-in-wordpress-5-5/> for more guidance on using `WP_ENVIRONMENT_TYPE`
+
 ### ⏲ Scheduling
 
 When you enable scheduling it calls [the `cron_schedules` hook](https://developer.wordpress.org/reference/hooks/cron_schedules/) which depends on your site having visitors to be triggered. To make sure your schedule is triggered timely, you could schedule a CRON job in your hosting panel which calls `wp-cron.php`. Please check out the [Webhook Netlify Deploy scheduling documentation](https://github.com/lukethacoder/wp-webhook-netlify-deploy#scheduling-netlify-builds) for more information.
